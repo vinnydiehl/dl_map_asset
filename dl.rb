@@ -6,6 +6,7 @@ require "fileutils"
 include Magick
 
 zoom = 1
+listZoom = [1,2,3,4,5,6,7,8]
 TEMP_DIR = "./#{zoom}"
 TILES_DIR = "./tiles"
 URL0 = "https://cdn.newworldfans.com/newworldmap/09-2022/#{zoom}/xxx/yyy.png"
@@ -21,13 +22,13 @@ def build_url(url, x, y)
 end
 
 
-if !File.exists? TEMP_DIR
-  Dir.mkdir TEMP_DIR
-elsif !Dir.empty? TEMP_DIR
-  print "It looks like mapsnatcher didn't close properly. Use backed up files? [Y/n] "
-  FileUtils.rm_f(Dir.glob("#{TEMP_DIR}/*")) if STDIN.gets.chomp =~ /n.*/i
-  puts
-end
+// if !File.exists? TEMP_DIR
+  // Dir.mkdir TEMP_DIR
+// elsif !Dir.empty? TEMP_DIR
+  // print "It looks like mapsnatcher didn't close properly. Use backed up files? [Y/n] "
+  // FileUtils.rm_f(Dir.glob("#{TEMP_DIR}/*")) if STDIN.gets.chomp =~ /n.*/i
+  // puts
+// end
 
   url = URL0
 
@@ -85,23 +86,26 @@ dl_counter = 0
 dl_total = x_range.size * y_range.size
 
 stitch = ImageList.new
-y_range.each do |y|
-  row = ImageList.new
-  x_range.each do |x|
-    print "Downloading... [#{dl_counter += 1}/#{dl_total}]\r"
-	temp = "#{TEMP_DIR}/#{x}_#{y}.#{format.downcase}"
-	
-    if File.exists? temp
-      img = Image.read(temp).first
-    else
-      blob = URI.open(build_url url, x, y).read
-	  File.open(temp, "wb") { |f| f.write blob }
-      img = Image.from_blob(blob).first
-	row.push img
-    end
-  end
-  stitch.push row.append(false)
-end
-stitch.append(true).write "zoom_#{zoom}.png"
+listZoom.each do |z|
+	if !File.exists? "./#{z}"
+		Dir.mkdir "./#{z}"
+	y_range.each do |y|
+	  row = ImageList.new
+	  x_range.each do |x|
+		print "Downloading... [#{dl_counter += 1}/#{dl_total}]\r"
+		temp = "#{TEMP_DIR}/#{Dir.mkdir(x) unless Dir.exist? x}_#{y}.#{format.downcase}"
+		
+		if File.exists? temp
+		  img = Image.read(temp).first
+		else
+		  blob = URI.open(build_url url, x, y).read
+		  File.open(temp, "wb") { |f| f.write blob }
+		  img = Image.from_blob(blob).first
+		row.push img
+		end
+	  end
+	  stitch.push row.append(false)
+	end
+	stitch.append(true).write "zoom_#{zoom}.png"
 
 puts "\nDone!"
